@@ -1,13 +1,13 @@
-import React from "react";
+import React, {useEffect, useCallback} from "react";
 import { View, Text, StyleSheet, Button, ScrollView, Image } from "react-native";
 // thsi useSelector allows us to select a slice of our state(global state), this will help to retrive data out of store
 // we are using state for MEALS so no need to use MEALS in this js file more
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleFavorite } from "../store/actions/meals";
 import { MEALS } from "../data/dummy-data";
 import CustomHeaderButton from "../components/HeaderButton";
 // HeaderButtons and Item are both components
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
-import HeaderButton from '../components/HeaderButton'
 import DefaultText from "../components/DefaultText";
 
 const ListItem = props => {
@@ -25,9 +25,40 @@ const MealsDetailScreen = (props) => {
   // state.meals is from app.js file form our store
   const availableMeals = useSelector(state => state.meals.meals);
 
-  const mealId = props.navigation.getParam("mealId");
-  const selectedMeal = availableMeals.find((meal) => meal.id === mealId);
 
+  // even comp rerenders mealId wont change bcoz we are on this same page, so, this statement is related to useCallback
+  const mealId = props.navigation.getParam("mealId");
+  
+  
+  
+  
+  
+  
+  const selectedMeal = availableMeals.find((meal) => meal.id === mealId);
+  
+  const dispatch = useDispatch();
+  const toggleFavoriteHandler = useCallback(() => {
+    dispatch(toggleFavorite(mealId));
+  },[dispatch, mealId]);
+  
+  useEffect(() => {
+    props.navigation.setParams({toggleFav: toggleFavoriteHandler});
+  }, [toggleFavoriteHandler])
+  
+
+  // though we are sending our meal is favourite from mealList.js but we need useEffect here because our while we still on this page if we toggle the favorite icon then we need to change the isFavorite or not so for that we need useEffect here
+  const currentMealIsFavorite = useSelector(state => state.meals.favoriteMeals.some(meal => meal.id === mealId));
+  useEffect(() => {
+    props.navigation.setParams({isFav: currentMealIsFavorite})
+  },[currentMealIsFavorite])
+
+
+  // useEffect will sent paramas late to my navigation so title rendering may be late so, another way is if we directly send the mealItem from the component where the data is getting from means favotiresscreen and categorymealscreen
+  // useEffect(() =>{
+  //   props.navigation.setParams({
+  //     mealTitle:selectedMeal.title
+  //   })
+  // },[selectedMeal])
   return (
     <ScrollView>
       <Image source={{ uri: selectedMeal.imageUrl }} style={styles.image} />
@@ -55,14 +86,33 @@ const MealsDetailScreen = (props) => {
   );
 };
 
+// MealsDetailScreen.navigationOptions = (navigationData) => {
+//   const mealId = navigationData.navigation.getParam("mealId");
+//   const selectedMeal = MEALS.find((meal) => meal.id === mealId);
+//   return {
+//     headerTitle: selectedMeal.title,
+//     // and this HeaderButton compo expects a HeaderButtonComponent prop where we point at the componenet that should be used to render the Item component
+//     headerRight: () => <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
+//       <Item title='Favorite' iconName='ios-star' onPress={() => { console.log('mark as favorite') }} />
+//     </HeaderButtons>
+//   };
+// };
+
+
+// here the main thing is that comunicating between redux data and navigation options
+
 MealsDetailScreen.navigationOptions = (navigationData) => {
-  const mealId = navigationData.navigation.getParam("mealId");
-  const selectedMeal = MEALS.find((meal) => meal.id === mealId);
+  // const mealId = navigationData.navigation.getParam("mealId");
+  const mealTitle = navigationData.navigation.getParam("mealTitle");
+  const toggleFavorite = navigationData.navigation.getParam('toggleFav');
+  const isFavorite = navigationData.navigation.getParam('isFav');
+  console.log(isFavorite);
+  // const selectedMeal = MEALS.find((meal) => meal.id === mealId);
   return {
-    headerTitle: selectedMeal.title,
+    headerTitle: mealTitle,
     // and this HeaderButton compo expects a HeaderButtonComponent prop where we point at the componenet that should be used to render the Item component
     headerRight: () => <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
-      <Item title='Favorite' iconName='ios-star' onPress={() => { console.log('mark as favorite') }} />
+      <Item title='Favorite' iconName={isFavorite ? 'ios-star':'ios-star-outline'} onPress={toggleFavorite } />
     </HeaderButtons>
   };
 };

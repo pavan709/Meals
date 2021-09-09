@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Switch, Platform } from 'react-native';
 import CustomHeaderButton from "../components/HeaderButton";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import Colors from '../constants/Colors';
-
+import { useDispatch } from 'react-redux';
+import { setFilters } from '../store/actions/meals';
 const FilterSwitch = props => {
   return (
     <View style={styles.filterContainer}>
@@ -30,6 +31,11 @@ const FilterScreen = props => {
   const [isVegan, setIsVegan] = useState(false);
   const [isVegetarian, setIsVegetarian] = useState(false);
 
+
+
+  const dispatch = useDispatch();
+
+
   // this saveFilters is just a way of comunicating between navigation and componenet, see in the headerRight below
   // useCallback works or return a stored version of arrow function it doesnot execute(useEffect exutes but useCallback not) the arrow function but it actually return the stored version of that arrow function and it does only if any of its dependencies changes not on rerenders, if i dont useCallback my saveFilters will run when ever rerenders happens that means in the useEffect will go under infinite rerenders as useEffect renders upon changes to the saveFilters and saveFilters will change on every render cycle
 
@@ -45,10 +51,10 @@ const FilterScreen = props => {
         vagan: isVegan,
         vegetarian: isVegetarian,
       }
-      console.log(appliedFilters);
-    },[isGlutenFree,isLactoseFree,isVegetarian,isVegan]);
+      dispatch(setFilters(appliedFilters));
+    },[isGlutenFree,isLactoseFree,isVegetarian,isVegan,dispatch]);
     // this is destructuring we are setting navigation with same const navigation
-    const isfunc = () => {console.log(20)}
+    
   const {navigation} = props;
   // reason for second parameter [] in useEffect is that, they are dependencies, generally useEffect runs every time rerenders or a stat update so now my useeffect only runs when saveFilters executed or navigation changes or updates,
   //  if i pass navigation as dependency in the useEffect it will cause infinite loop because when on inintal load my navigation runs and by using useEffect we are making changes to navigation and upon changes on navigation again useEffect will run so it will be on infinite loop
@@ -75,7 +81,7 @@ FilterScreen.navigationOptions = (navigationData) => {
       <Item title="Menu" iconName='ios-menu' onPress={() => { navigationData.navigation.toggleDrawer() }} />
     </HeaderButtons>,
     headerRight: () => <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
-      <Item title="Save" iconName='ios-Save' onPress={navigationData.navigation.getParam('save')} />
+      <Item title="Save" iconName='ios-save' onPress={navigationData.navigation.getParam('save')} />
     </HeaderButtons>
   }
 };
